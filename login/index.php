@@ -84,46 +84,8 @@ if (!empty($SESSION->has_timed_out)) {
 $frm  = false;
 $user = false;
 
-
 //START Turiba patched
-$STKID=@$_GET['STKID'];
-$AuthString=@$_GET['AuthString'];
-$ErrUrl=@$_GET['ErrUrl'];
-$ErrUrl = base64_url_decode($ErrUrl);
-$signature = base64_url_decode($AuthString);
-
-$PublicKey = file_get_contents('Keys/cert.pem');
-$pKeyId = openssl_get_publickey($PublicKey);
-$InfoSign = '';
-openssl_public_decrypt($signature, $InfoSign, $pKeyId);
-openssl_free_key($pKeyId);
-
-$InfoSign = base64_url_decode($InfoSign);
-$SimbCount = (int)substr($InfoSign,0,3);
-$U = substr($InfoSign,3,$SimbCount);
-$InfoSign = substr($InfoSign,$SimbCount + 3);
-
-$SimbCount = (int)substr($InfoSign,0,3);
-$P = substr($InfoSign,3,$SimbCount);
-$InfoSign = substr($InfoSign,$SimbCount + 3);
-
-$SimbCount = (int)substr($InfoSign,0,3);
-$AuthTimestamp = substr($InfoSign,3,$SimbCount);
-$InfoSign = substr($InfoSign,$SimbCount + 3);
-
-$SimbCount = (int)substr($InfoSign,0,3);
-$Role = substr($InfoSign,3,$SimbCount);
-
-$date = new DateTime();
-$Timestamp = $date->getTimestamp();
-
-if ((strlen($U)>=1) && (strlen($P)>=1) && $Timestamp-$AuthTimestamp>=5000 ){
-  $frm = new \stdClass;
-  $frm->username = $U;
-  $frm->password = $P;
-  //$SESSION->wantsurl = 'http://aquila-t.turiba.lv/course/view.php?id='.$STKID;
-  $SESSION->wantsurl = 'http://aquila-t.turiba.lv';
-}
+require_once($_SERVER['DOCUMENT_ROOT'] . '/_batis/login_index.php');
 //END Turiba patched
 
 $authsequence = get_enabled_auth_plugins(true); // auths, in sequence
@@ -410,6 +372,13 @@ if (isloggedin() and !isguestuser()) {
     echo $OUTPUT->confirm(get_string('alreadyloggedin', 'error', fullname($USER)), $logout, $continue);
     echo $OUTPUT->box_end();
 } else {
+
+  //START BATIS patched
+  if($errormsg) {
+    require_once($_SERVER['DOCUMENT_ROOT'] . '/_batis/login_index-errormsg.php');
+  }else
+  //END BATIS patched
+
     include("index_form.html");
     if ($errormsg) {
         $PAGE->requires->js_init_call('M.util.focus_login_error', null, true);
@@ -420,10 +389,3 @@ if (isloggedin() and !isguestuser()) {
 }
 
 echo $OUTPUT->footer();
-
-
-
-function base64_url_decode($input) {
-	return base64_decode(strtr($input, '-_,', '+/='));
-}
-
