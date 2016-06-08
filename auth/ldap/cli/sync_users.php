@@ -46,6 +46,8 @@
 
 define('CLI_SCRIPT', true);
 
+$authtype = 'ldap';
+
 require(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php'); // global moodle config file.
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->libdir.'/clilib.php');
@@ -53,19 +55,19 @@ require_once($CFG->libdir.'/clilib.php');
 // Ensure errors are well explained
 set_debugging(DEBUG_DEVELOPER, true);
 
-if (!is_enabled_auth('ldap')) {
-    error_log('[AUTH LDAP] '.get_string('pluginnotenabled', 'auth_ldap'));
+if (!is_enabled_auth($authtype)) {
+    error_log('[AUTH '.strtoupper($authtype).'] '.get_string('pluginnotenabled', 'auth_'.$authtype));
     die;
 }
 
-cli_problem('[AUTH LDAP] The users sync cron has been deprecated. Please use the scheduled task instead.');
+cli_problem('[AUTH '.strtoupper($authtype).'] The users sync cron has been deprecated. Please use the scheduled task instead.');
 
 // Abort execution of the CLI script if the auth_ldap\task\sync_task is enabled.
 $taskdisabled = \core\task\manager::get_scheduled_task('auth_ldap\task\sync_task');
 if (!$taskdisabled->get_disabled()) {
-    cli_error('[AUTH LDAP] The scheduled task sync_task is enabled, the cron execution has been aborted.');
+    cli_error('[AUTH '.strtoupper($authtype).'] The scheduled task sync_task is enabled, the cron execution has been aborted.');
 }
 
-$ldapauth = get_auth_plugin('ldap');
+$ldapauth = get_auth_plugin($authtype);
 $ldapauth->sync_users(true);
 
